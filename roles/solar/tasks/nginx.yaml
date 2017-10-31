@@ -1,0 +1,46 @@
+---
+- name: install nginx nginx-extras webserver
+  apt: pkg="{{item}}" state=present
+  become: yes
+  with_items:
+      - nginx
+      - nginx-extras
+
+
+- name: configure nginx
+  template: src=nginx/nginx.conf dest="/etc/nginx/nginx.conf"
+  become: yes
+
+- name: configure app nginx
+  template: src=nginx/app_uwsgi_nginx.conf dest="/etc/nginx/sites-available/{{ django_project.app_name }}_uwsgi_nginx.conf"
+  become: yes
+
+- name: link to enable nginx configuration
+  file: state=link
+        src=/etc/nginx/sites-available/{{ django_project.app_name }}_uwsgi_nginx.conf
+        path=/etc/nginx/sites-enabled/{{ django_project.app_name }}_uwsgi_nginx.conf
+  become: yes
+  notify: restart nginx
+
+- name: disable default configuration
+  file: state=absent path=/etc/nginx/sites-enabled/default
+  become: yes
+  notify: restart nginx
+
+- name: set nginx directories permissions
+  file: path={{ item }} state=directory
+        group={{ web_server_group }} mode=0755
+  with_items:
+      - /var/log/nginx
+      - /etc/nginx
+      - /etc/nginx/sites-available
+      - /etc/nginx/sites-enabled
+  become: yes
+
+- name: set nginx logs permissions
+  file: path=/var/log/nginx/{{ item }} state=file
+        owner={{ web_server_group }} group={{ web_server_group }} mode=0644
+  with_items:
+      - access.log
+      - error.log
+  become: yes

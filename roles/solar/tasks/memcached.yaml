@@ -1,0 +1,11 @@
+---
+
+- name: "Instalar pacotes: memcached"
+  apt:
+    pkg: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - memcached
+  become: yes
+  when: ansible_os_family|lower == "debian"

@@ -1,0 +1,36 @@
+---
+- name: install certbot
+  apt: pkg="{{item}}" state=present
+  become: yes
+  with_items:
+      - certbot
+
+
+- name: "Checking certbot www folders"
+  stat:
+   path: "{{item}}"
+  register: certbot_folder_stats
+  with_items:
+  - [
+    "{{ ansible_env.HOME }}/{{django_project.app_name}}/logs/certbot_www/",
+    ]
+
+- name: "Creating multiple folders without disturbing previous permissions"
+  file:
+    path: "{{item.item}}"
+    state: directory
+  when: item.stat.exists == false
+  with_items:
+  - "{{certbot_folder_stats.results}}"
+
+#- name: certbot manual
+#  become: yes
+#  shell: "certbot certonly -a webroot --webroot-path={{ ansible_env.HOME }}/{{django_project.app_name}}/logs/certbot_www/ {% for domain in django_project.domains %}-d {{ domain }}{% endfor %}"
+#  notify:
+#    - "restart supervisord"
+#    - "restart nginx"
+
+
+
+- name: "debug"
+  debug: msg="certbot certonly --agree-tos -m {{letsencrypt_email}} -a webroot --webroot-path={{ ansible_env.HOME }}/{{django_project.app_name}}/logs/certbot_www/ {% for domain in django_project.domains %} -d {{ domain }}{% endfor %}"

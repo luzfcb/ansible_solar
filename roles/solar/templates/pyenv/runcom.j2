@@ -1,0 +1,7 @@
+if [ -f {{ pyenv_root }}/bin/pyenv ]; then
+    export PYENV_ROOT="$HOME/.pyenv"
+    export PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
+    eval "$(pyenv init -)"
+    eval "$(pyenv virtualenv-init -)"
+    pyenv virtualenvwrapper_lazy
+fi

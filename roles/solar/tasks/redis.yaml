@@ -1,0 +1,13 @@
+---
+
+- name: "Instalar pacotes: redis-server, redis-tools"
+  apt:
+    pkg: "{{ item }}"
+    state: present
+    update_cache: yes
+  with_items:
+    - redis-server
+    - redis-tools
+  become: yes
+  when: ansible_os_family|lower == "debian"
+

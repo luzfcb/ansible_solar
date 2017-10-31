@@ -1,0 +1,91 @@
+---
+- name: Install pyenv requirements
+  apt:
+    pkg: "{{ item }}"
+    state: present
+    update_cache: yes
+  become: yes
+  with_items:
+    - make
+    - python-dev
+    - python3-dev
+    - build-essential
+    - libssl-dev
+    - zlib1g-dev
+    - libbz2-dev
+    - libreadline-dev
+    - libsqlite3-dev
+    - wget
+    - curl
+    - llvm
+    - git
+    - gettext
+    - libncurses5-dev
+    - tk-dev
+    - tcl-dev
+    - blt-dev
+    - libgdbm-dev
+    - aria2
+
+# FIXME: Debian or Darwin should use the same installation way for simplicity and consistency
+- name: Clone/Install pyenv git repository https://github.com/pyenv/pyenv.git
+  git:
+    repo: https://github.com/pyenv/pyenv.git
+    dest: "{{ pyenv_root }}"
+    update: yes
+  register: pyenv_install_result
+
+- name: Clone/Install pyenv-virtualenv and pyenv-virtualenvwrapper
+  git:
+    repo: "https://github.com/pyenv/{{ item }}.git"
+    dest: "{{ pyenv_root }}/plugins/{{ item }}"
+    update: yes
+  with_items:
+    - pyenv-virtualenv
+    - pyenv-virtualenvwrapper
+#
+#- name: "Checking ~/.config/pip/ folder"
+#  stat:
+#   path: "{{item}}"
+#  register: pip_folder_stats
+#  with_items:
+#  - [
+#    "{{ ansible_env.HOME }}/.config/pip/",
+#    ]
+#
+#- name: "Creating multiple folders without disturbing previous permissions"
+#  file:
+#    path: "{{item.item}}"
+#    state: directory
+#  when: item.stat.exists == false
+#  with_items:
+#  - "{{pip_folder_stats.results}}"
+#
+#
+#- name: "Checking ~/.config/pip/pip.conf file"
+#  stat:
+#   path: "{{item}}"
+#  register: pip_confi_file_stats
+#  with_items:
+#  - [
+#    "{{ ansible_env.HOME }}/.config/pip/pip.conf",
+#    ]
+#
+#
+#- name: "Creating ~/.config/pip/pip.conf without disturbing previous permissions"
+#  copy:
+#    src: "pip/pip.conf"
+#    dest: "{{item.item}}"
+#  when: item.stat.exists == false
+#  with_items:
+#  - "{{pip_confi_file_stats.results}}"
+
+- name: Add pyenv to run commands
+  tags:
+    - runcom
+  blockinfile:
+    path: "{{ pyenv_runcom }}"
+    marker: "# {mark} pyenv"
+    state: present
+    create: yes
+    content: "{{ lookup('template', 'templates/pyenv/runcom.j2') }}"

@@ -1,0 +1,4 @@
+{{ ansible_env.HOME }}/{{django_project.app_name}}/logs/uwsgi/{{django_project.app_name}}.log {
+    missingok # no error if the logfile is missing
+    size 50M # rotate log file when size > 50 MB
+}

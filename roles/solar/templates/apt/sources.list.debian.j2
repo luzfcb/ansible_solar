@@ -1,0 +1,7 @@
+# File: sources.list
+
+deb {{ debian_apt_mirror }} {{ ansible_distribution_release }} main contrib non-free
+deb-src {{ debian_apt_mirror }} {{ ansible_distribution_release }} main contrib non-free
+
+deb http://security.debian.org/ {{ ansible_distribution_release }}/updates main contrib non-free
+deb-src http://security.debian.org/ {{ ansible_distribution_release }}/updates main contrib non-free

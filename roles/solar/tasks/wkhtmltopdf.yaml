@@ -1,0 +1,50 @@
+---
+
+- name: 'check if wkhtmltopdf directory exists'
+  file:
+    path: "{{ ansible_env.HOME }}/{{django_project.app_name}}/{{django_project.src_dir_name | default('src')}}/binarios_executaveis/wkhtmltox_0.12.5_debug/bin/"
+    state: directory
+
+- name: 'check if wkhtmltopdf is installed'
+  stat:
+    path: "{{ ansible_env.HOME }}/{{django_project.app_name}}/{{django_project.src_dir_name | default('src')}}/binarios_executaveis/wkhtmltox_0.12.5_debug/bin/wkhtmltopdf"
+    checksum_algorithm: sha1
+  register: wkhtmltopdf_file
+
+- set_fact:
+    force_new_download: "{{ wkhtmltopdf_file.stat.checksum != 'ce2d0cf6bb195be152b0198ad3bab5ba9c398770' }}"
+    redownload: False
+  when: wkhtmltopdf_file.stat.exists
+
+- set_fact:
+    force_new_download: True
+    redownload: True
+  when: not wkhtmltopdf_file.stat.exists
+
+
+
+- name: 'Download wkhtmltopdf binary'
+#  shell: 'aria2c -k 5M -s 10 -x 10 -c --dir=/tmp/wk --out=binarios.tar.xz "https://drive.google.com/uc?export=download&id=0B0qPRYTwNJrfeldQSm9JZ0FxdWM"'
+  shell: 'aria2c -k 5M -s 10 -x 10 -c --allow-overwrite=true --dir={{ ansible_env.HOME }} --out=binarios.tar.xz "http://box.defensoria.to.gov.br/medias/226/download"'
+  args:
+    executable: /bin/bash
+  register: wkdownload
+  when: force_new_download or redownload
+
+
+#- name: 'Setup wkhtmltopdf binary'
+#  unarchive:
+#    remote_src: yes
+#    src: "{{ ansible_env.HOME }}/binarios.tar.xz"
+#    dest: "{{ ansible_env.HOME }}/{{django_project.app_name}}/{{django_project.src_dir_name | default('src')}}"
+#    extra_opts: "-v"
+#  register: wk_untar
+#  when: force_new_download
+
+- name: 'Setup wkhtmltopdf binary'
+  command: "/bin/tar --extract -C {{ ansible_env.HOME }}/{{django_project.app_name}}/{{django_project.src_dir_name | default('src')}} --show-transformed-names -f {{ ansible_env.HOME }}/binarios.tar.xz"
+  register: wk_untar
+  when: force_new_download
+
+- name:
+  debug: msg="{{wk_untar}}"

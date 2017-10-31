@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  author: Dorian Pula
+  description: An elegant NGINX, UWSGI and supervisor Ansible role
+  company: Amber Penguin Software
+  license: BSD
+  min_ansible_version: 1.9
+  platforms:
+  - name: Ubuntu
+    versions:
+    - saucy
+    - trusty
+    - xenial
+  categories:
+  - development
+  - web
+dependencies: []

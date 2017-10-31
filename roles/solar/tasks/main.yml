@@ -1,0 +1,23 @@
+---
+
+- include_tasks: base.yaml
+- include_tasks: motd.yaml
+- include_tasks: memcached.yaml
+- include_tasks: redis.yaml
+- include_tasks: ntp.yaml
+- include_tasks: pyenv.yaml
+- include_tasks: python_pyenv.yaml
+- include_tasks: nginx.yaml
+- include_tasks: supervisor.yaml
+- include_tasks: project.yaml
+- include_tasks: wkhtmltopdf.yaml
+- include_tasks: uwsgi_novo.yaml
+
+- name: "executar task certbot: {{letsencrypt_enable}}"
+  include_tasks: certbot.yaml
+  when: letsencrypt_enable
+
+
+#- name: "restart supervisord (uwsgi) e nginx"
+##  debug: msg="{{default_django_project | combine(item.settings, recursive=True)}}"
+#  debug: msg="{{django_project}}"

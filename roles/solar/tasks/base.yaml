@@ -1,0 +1,42 @@
+---
+
+#- name: compartilhar variavel host_aplicacao
+#  set_fact:
+#      host_aplicacao="{{hostvars['localhost']['host_aplicacao']}}"
+#      host_database="{{hostvars['localhost']['host_database']}}"
+
+- name: replace apt mirror on debian
+  become: yes
+  template: >
+    src=templates/apt/sources.list.debian.j2
+    dest=/etc/apt/sources.list
+    backup=yes
+  when:
+     - ansible_distribution|lower == "debian"
+     - trocar_repositorio_apt
+
+
+- name: Check if python-apt package is installed
+  become: yes
+  command: "dpkg-query -W -f='${Status}' python-apt"
+  register: python_apt_result
+  changed_when: False
+
+- name: Update apt packages information cache python-apt
+  become: yes
+  command: "apt-get update"
+  when: python_apt_result.stdout != "install ok installed"
+  changed_when: False
+
+- name: Install python-apt
+  become: yes
+  command: "apt-get install python-apt --yes"
+  when: python_apt_result.stdout != "install ok installed"
+
+
+- name: Install htop packages
+  become: yes
+  apt: pkg="{{item}}" state=present update_cache=yes cache_valid_time=300
+  with_items:
+      - htop
+

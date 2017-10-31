@@ -1,0 +1,59 @@
+---
+
+aplicacao_ip: ""
+aplicacao_linux_normal_user: ""
+aplicacao_linux_normal_user_password: ""
+aplicacao_linux_root_password: ""
+aplicacao_linux_ssh_port: "22"
+
+
+# obrigatorio fornecer, mesmo se nao for usar postgresql.yml
+bancodados_ip: ""
+bancodados_nome_banco_solar: "db_solar"
+bancodados_nome_usuario_banco_solar: "postgres"
+bancodados_senha_usuario_banco_solar: "postgres"
+bancodados_porta_banco_solar: "5432"
+
+# so é necessário definir se voce for utilizar postgresql.yml
+bancodados_linux_normal_user: ""
+bancodados_linux_normal_user_password: ""
+bancodados_linux_root_password: ""
+bancodados_linux_ssh_port: "22"
+
+
+# dominios o qual a aplicacao estara disponivel e exposta via nginx
+# o dominio primario deve ser o primeiro da lista
+solar_nginx_domains: ['solar.defensoria.to.gov.br', 'www.solar.defensoria.to.gov.br']
+
+# dominios e hosts autorizados a enviar requisicoes para a aplicacao django
+# nesta lista, deve constar todos os dominios da lista solar_nginx_domains , acessida dos '127.0.0.1', 'localhost'
+solar_django_allowed_hosts: ['solar.defensoria.to.gov.br', 'www.solar.defensoria.to.gov.br', '127.0.0.1', 'localhost']
+
+# veja o arquivo timezones.txt pra listar os disponiveis para o brasil
+# o conteudo dessa variavel deve respeitar os maiusculas/minusculas
+solar_timezone: 'America/Araguaina'
+solar_sigla_uf: 'to'
+
+#
+solar_secret_key: 'STRING_LONGA_E_ALEATORIA_SEM_ESPACOS_QUE_NAO_DEVE_SER_COMMITADA_E_COMPARTILHADA_NUNCA'
+
+# tag de versao do SOLAR a ser feito deploy
+# veja as tags disponiveis em:
+# https://gitlab.defensoria.to.gov.br/defensoria/sisat/tags
+solar_git_tag_version: "17.10.6"
+
+# id do google analytics fornecida pela DPE-TO
+solar_google_analytics_id: ""
+
+
+# usuario e senha que foi fornecido para voces para acesso no gitlab.defensoria.to.gov.br
+git_server_username: ""
+git_server_password: ""
+
+
+# nao modifique essas variaveis
+solar_database_url: "postgres://{{bancodados_nome_usuario_banco_solar}}:{{bancodados_senha_usuario_banco_solar}}@{{bancodados_ip}}:{{bancodados_porta_banco_solar}}/{{bancodados_nome_banco_solar}}"
+solar_git_repository_name: "defensoria/sisat"
+git_server_domain: "gitlab.defensoria.to.gov.br"
+aplicacao_linux_root_user: "root"
+bancodados_linux_root_user: "root"

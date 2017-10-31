@@ -1,0 +1,87 @@
+---
+
+
+- hosts: localhost
+  gather_facts: no
+  vars_files:
+    - parametros.yml
+  tasks:
+    - name:
+      vars:
+        include_vars: group_vars/parametros.yml
+      set_fact:
+          aplicacao_ip_host="{{aplicacao_ip}}"
+          bancodados_ip_host="{{bancodados_ip}}"
+      changed_when: False
+    - name:
+      add_host:
+          name: "{{ aplicacao_ip_host }}"
+          host_name: "solarserver"
+          ansible_user: "{{aplicacao_linux_normal_user}}"
+          ansible_password: "{{aplicacao_linux_normal_user_password}}"
+          ansible_become_user: "{{aplicacao_linux_root_user}}"
+          ansible_become_pass: "{{aplicacao_linux_root_password}}"
+          ansible_become_method: "su"
+          ansible_port: "{{aplicacao_linux_ssh_port}}"
+          instance_name: "aplicacao_solar"
+          groups: dynamically_created_host_aplicacao
+      changed_when: False
+
+- hosts:
+    - dynamically_created_host_aplicacao
+  vars_files:
+    - parametros.yml
+  roles:
+      - { role: solar,
+          use_pypi_mirror: False,
+          trocar_repositorio_apt: True,
+          letsencrypt_enable: False,
+          letsencrypt_email: "suportesolar@defensoria.to.def.br",
+          django_project:
+            {
+              git_url: 'https://{{git_server_username}}:{{git_server_password}}@{{git_server_domain}}/{{solar_git_repository_name}}.git',
+              version_tag: '{{solar_git_tag_version}}',
+              virtualenv_name: 'solar',
+              app_name: 'solar',
+              app_uwsgi_port: 8000,
+              domains: '{{solar_nginx_domains}}',
+              uwsgi: 'config.uwsgi',
+              media_dir: 'media',
+              static_dir: 'staticfiles_producao',
+              env: {
+                DATABASE_URL: "{{solar_database_url}}",
+                SECRET_KEY: "{{solar_secret_key}}",
+                ALLOWED_HOSTS: '{{solar_django_allowed_hosts}}',
+                TIME_ZONE: "{{solar_timezone}}",
+                SIGLA_UF: "{{solar_sigla_uf}}",
+                GOOGLE_ANALYTICS_ID: "{{solar_google_analytics_id}}",
+                DEBUG: True,
+                DEBUG_TOOLBAR: True,
+                DEBUG_TEMPLATE: True,
+
+                RAVEN_DSN: "",
+                RAVENJS_DSN: "",
+
+                PROCAPI_URL: "",
+
+                ATHENAS_API_URL: "",
+                LDAP_AUTH_BIND_DN: '',
+                LDAP_AUTH_BIND_PASSWORD: "",
+                LDAP_AUTH_BIND_SUFFIX: "",
+                LDAP_AUTH_SERVER_URI: "",
+
+
+
+                NOME_INSTITUICAO: "Solução Avançada em Atendimento de Referência",
+
+                EXIBIR_ALERTA_AVALIACAO_ASSISTIDO: True,
+                MENSAGEM_ALERTA_AVALIACAO_ASSISTIDO: "<p></p>",
+
+                EXIBIR_ALERTA_AVALIACAO_ASSISTIDO_129: True,
+                MENSAGEM_ALERTA_AVALIACAO_ASSISTIDO_129: "<p></p>",
+                CHRONUS_URL: '',
+              }
+            }
+
+        }
+

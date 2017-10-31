@@ -1,0 +1,36 @@
+---
+# handlers file for ansible-nginx-uwsgi-supervisor
+- name: restart uwsgi app
+  supervisorctl: name={{django_project.app_name}} state=restarted config=/etc/supervisor/supervisord.conf
+  become: yes
+
+- name: start supervisord
+  service: name=supervisor state=started
+  become: yes
+
+- name: start supervisord
+  service: name=supervisor state=started
+  become: yes
+
+- name: restart supervisord
+  service: name=supervisor state=restarted
+  become: yes
+
+- name: restart nginx
+  service: name=nginx state=restarted
+  become: yes
+#
+#- name: restart uwsgi.service
+#  service: name=uwsgi state=restarted
+#  become: yes
+
+- name: 'HANDLER | Restart ntp'
+  become: yes
+  service:
+    name: "{{ ntp_service.name }}"
+    state: 'restarted'
+  when: "ntp_service.state != 'stopped'"
+  tags:
+    - 'role::ntp'
+    - 'role::ntp::config'
+    - 'role::ntp::install'

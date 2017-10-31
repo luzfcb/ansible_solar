@@ -1,0 +1,147 @@
+---
+# defaults file for ansible-nginx-uwsgi-supervisor
+
+### Pyenv
+pyenv_root: "~/.pyenv"
+pyenv_runcom: "~/.bash_profile"
+pyenv_versions:
+  - "2.7.14"
+pyenv_global_version: "2.7.14"
+pyenv_global_python_directory: '{{ ansible_env.HOME }}/.pyenv/versions/{{pyenv_global_version}}'
+#pyenv_project_versions: []
+pyenv_pip_mirror: https://pypi.python.org/pypi
+
+
+### end Pyenv
+
+### apt
+debian_apt_mirror: 'http://mirror.unesp.br/linux/debian/'
+
+### end apt
+
+
+### django project configs
+solar_git_repository_name: "defensoria/sisat"
+git_server_domain: "gitlab.defensoria.to.gov.br"
+git_server_username:
+git_server_password:
+git_version_tag: "17.10.6"
+django_project_root_directory_name: "solar"
+django_project_src_directory_name: "src"
+django_project_root_directory: "{{ ansible_env.HOME }}/{{django_project_root_directory_name}}"
+django_project_src_directory: "django_project_root_directory/{{django_project_src_directory_name}}"
+p_version: "2.7.14"
+virtualenv_dir: "{{ ansible_env.HOME }}/.pyenv/"
+
+
+### end
+
+
+# Web root paths + app name + home
+web_root_path: "{{ django_project_root_directory }}"
+web_server_group: www-data
+
+app_name: solar
+app_root_path: "{{ web_root_path }}/{{ app_name }}_webapp"
+
+# NGINX
+app_nginx_hostname: localhost
+app_nginx_static_path: "{{ app_root_path }}/{{ app_name }}/static/"
+app_nginx_media_path: "{{ app_root_path }}/{{ app_name }}/static/"
+
+# UWSGI
+app_uwsgi_port: 8000
+app_uwsgi_executable: "app:make_wsgi_app()"
+app_uwsgi_envs: {}
+
+# Virtualenvs
+virtualenv_root_path: "{{ pyenv_global_python_directory }}"
+#app_venv: "{{ virtualenv_root_path }}/{{ app_name }}"
+app_venv: "{{ virtualenv_root_path }}"
+
+
+
+
+### NTP
+# Defaults vars file for ntp role
+
+# Repository management
+#------------------------------------------------------------------------------
+ntp_repository_update_cache: True
+ntp_repository_cache_valid_time: 3600
+
+
+# Package variables
+#------------------------------------------------------------------------------
+ntp_packages: "{{ _ntp_packages }}"
+
+
+# Config file variables
+#------------------------------------------------------------------------------
+ntp_config_file_dest: '/etc/ntp.conf'
+ntp_config_file_owner: 'root'
+ntp_config_file_group: 'root'
+ntp_config_file_mode: '0644'
+
+
+# Service variables
+#------------------------------------------------------------------------------
+ntp_service:
+  enabled: True
+  name: "{{ _ntp_service_name }}"
+  state: 'started'
+
+
+# Configuration
+#------------------------------------------------------------------------------
+
+# Common commands
+ntp_peer: []
+ntp_broadcast: []
+ntp_manycastclient: []
+ntp_server:
+  - 'a.st1.ntp.br iburst'
+  - 'b.st1.ntp.br iburst'
+  - 'c.st1.ntp.br iburst'
+  - 'd.st1.ntp.br iburst'
+  - 'gps.ntp.br iburst'
+  - 'a.ntp.br iburst'
+  - 'b.ntp.br iburst'
+  - 'c.ntp.br iburst'
+ntp_restrict:
+  - '-4 default kod notrap nomodify nopeer noquery'
+  - '-6 default kod notrap nomodify nopeer noquery'
+  - '127.0.0.1'
+  - '::1'
+
+# Auxiliary Commands
+ntp_broadcastclient: []
+ntp_manycastserver: []
+ntp_multicastclient: []
+
+# Authentication Commands
+ntp_autokey: False
+ntp_revoke: False
+
+# The log file (False: syslog)
+ntp_logfile: False
+
+# The drift file
+ntp_driftfile: '/var/lib/ntp/ntp.drift'
+
+# Features management. If empty, default feature status is used
+ntp_enabled_feature: []
+ntp_disabled_feature: ['monitor', ]
+
+# Include a file
+ntp_includefile: False
+
+# Interface rules
+ntp_interface_drop: []
+ntp_interface_ignore:
+  - 'wildcard'
+ntp_interface_listen:
+  - "{{ ansible_default_ipv4.address }}"
+  - '127.0.0.1'
+  - '::1'
+### end NTP

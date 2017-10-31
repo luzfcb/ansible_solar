@@ -1,0 +1,38 @@
+---
+- name: Install the package "figlet" and git
+  apt:
+    name: "{{item}}"
+    state: present
+    update_cache: yes
+  become: yes
+  with_items:
+    - figlet
+
+- name: remove 10-uname
+  file:
+    state: absent
+    path: "/etc/update-motd.d/10-uname"
+  register: uname_10_result
+  become: yes
+
+- name: configurar mensagem de boas vindas no login
+  copy:
+    src: "motd/{{item}}"
+    dest: "/etc/update-motd.d/{{item}}"
+    owner: root
+    group: root
+    mode: 0755
+    backup: yes
+  with_items:
+    - '00-header'
+    - '10-sysinfo'
+    - '80-diskusage'
+    - '90-footer'
+  register: motd_result
+#  failed_when: >
+#    motd_result.rc != 0 and ("already exists" not in motd_result.stderr)
+#  changed_when: "motd_result.stdout == 0"
+  when: ansible_distribution|lower == "debian"
+  become: yes
+#- name: debug motd
+#  debug: msg="{{motd_result}}"

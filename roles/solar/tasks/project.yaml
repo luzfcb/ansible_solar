@@ -1,0 +1,150 @@
+---
+
+- name: 'CLONE | Clone/update Solar project'
+  git:
+    repo: "{{django_project.git_url}}"
+    dest: "{{ ansible_env.HOME }}/{{django_project.app_name}}/{{django_project.src_dir_name | default('src')}}"
+    version: "{{django_project.version_tag}}"
+    update: yes
+    force: yes
+
+
+- name: "Checking folders"
+  stat:
+   path: "{{item}}"
+  register: log_folder_stats
+  with_items:
+  - [
+    "{{ ansible_env.HOME }}/{{django_project.app_name}}/logs/nginx/",
+    "{{ ansible_env.HOME }}/{{django_project.app_name}}/logs/uwsgi/",
+    "{{ ansible_env.HOME }}/{{django_project.app_name}}/logs/supervisor/",
+    "{{ ansible_env.HOME }}/{{django_project.app_name}}/src/{{django_project.media_dir}}",
+    "{{ ansible_env.HOME }}/{{django_project.app_name}}/src/{{django_project.static_dir}}",
+    "{{ ansible_env.HOME }}/{{django_project.app_name}}/log/",
+    ]
+
+- name: "Creating multiple folders without disturbing previous permissions"
+  file:
+    path: "{{item.item}}"
+    state: directory
+  when: item.stat.exists == false
+  with_items:
+  - "{{log_folder_stats.results}}"
+
+- name: "Checking log files"
+  stat:
+   path: "{{item}}"
+  register: log_files_stats
+  with_items:
+  - [
+    "{{ ansible_env.HOME }}/{{django_project.app_name}}/logs/nginx/error.log",
+    "{{ ansible_env.HOME }}/{{django_project.app_name}}/logs/nginx/access.log",
+    "{{ ansible_env.HOME }}/{{django_project.app_name}}/logs/uwsgi/{{django_project.app_name}}.log",
+    "{{ ansible_env.HOME }}/{{django_project.app_name}}/logs/supervisor/{{django_project.app_name}}-application.log",
+    "{{ ansible_env.HOME }}/{{django_project.app_name}}/logs/supervisor/{{django_project.app_name}}-error.log",
+    "{{ ansible_env.HOME }}/{{django_project.app_name}}/log/sisat.log",
+     ]
+
+- name: "Creating multiple files without disturbing previous permissions"
+  copy:
+    src: "blank_log_file.log"
+    dest: "{{item.item}}"
+  when: item.stat.exists == false
+  with_items:
+  - "{{log_files_stats.results}}"
+
+
+- name: configurar diretorio pip
+  file: path={{ ansible_env.HOME }}/.config/pip/ state=directory
+
+- name: Install pip.conf
+  template: src=config/pip/pip.conf dest="{{ ansible_env.HOME }}/.config/pip/pip.conf"
+  when: use_pypi_mirror
+
+- name: criar arquivo .env
+  template: src=env_file dest="{{ ansible_env.HOME }}/{{django_project.app_name}}/src/.env"
+  register: arq_dot_env
+
+- name: debug
+  debug: msg="{{arq_dot_env}}"
+
+- name: install {{django_project.app_name}} Debian dependencies
+  apt:
+     pkg: "{{item}}"
+     state: present
+  become: yes
+  with_items:
+   - build-essential
+   - gettext
+   - graphviz-dev
+   - libfreetype6-dev
+   - libjpeg-dev
+   - liblcms2-dev
+   - libldap2-dev
+   - libmemcached-dev
+   - libpcre3
+   - libpcre3-dev
+   - libpq-dev
+   - libsasl2-dev
+   - libssl-dev
+   - libtiff5-dev
+   - libwebp-dev
+   - zlib1g-dev
+
+#- name: "Check virtualenv is created"
+#  file:
+#    path: "{{item.item}}"
+#    state: directory
+#  when: item.stat.exists == false
+#  with_items:
+#  - "{{log_folder_stats.results}}"
+#
+#- name: "Create virtualenv named {{django_project.app_name}}venv"
+#  shell: "pyenv virtualenvwrapper_lazy; mkvirtualenv -p {{ pyenv_global_python_directory }}/bin/python -a {{ ansible_env.HOME }}/{{django_project.app_name}}/src/ {{django_project.app_name}}venv"
+#  args:
+#      executable: /bin/bash
+#      chdir: "{{ ansible_env.HOME }}/{{django_project.app_name}}/src"
+#  register: pip_install_result
+#  tags:
+#    - 'deploy'
+
+- name: "Create virtualenv named {{django_project.app_name}}venv"
+  shell: ". {{ ansible_env.HOME}}/.bashrc && {{ pyenv_global_python_directory }}/bin/virtualenv --python=/usr/bin/python2 {{ ansible_env.HOME}}/.virtualenvs/{{django_project.app_name}}venv"
+  args:
+    executable: /bin/bash
+    creates: "{{ ansible_env.HOME}}/.virtualenvs/{{django_project.app_name}}venv"
+  register: mkvirtualenv
+  failed_when: 'mkvirtualenv.changed and "New python executable" not in mkvirtualenv.stdout'
+  tags:
+    - 'deploy'
+
+- name: "Create virtualenvwrapper .project file"
+  template: src=virtualenvwrapper/dot_project.j2 dest="{{ ansible_env.HOME}}/.virtualenvs/{{django_project.app_name}}venv/.project"
+
+- name: install {{django_project.app_name}} python dependencies
+  pip:
+    requirements: "{{ ansible_env.HOME }}/{{django_project.app_name}}/src/requirements.txt"
+    executable: "{{ ansible_env.HOME}}/.virtualenvs/{{django_project.app_name}}venv/bin/pip"
+    extra_args: "-v"
+
+
+- name: "django collectstatic_js_reverse"
+  shell: "{{ ansible_env.HOME}}/.virtualenvs/{{django_project.app_name}}venv/bin/python manage.py collectstatic_js_reverse"
+  args:
+      executable: /bin/bash
+      chdir: "{{ ansible_env.HOME }}/{{django_project.app_name}}/src"
+  register: collectstatic_js_reverse_result
+  tags:
+    - 'deploy'
+
+- name: "django collectstatic"
+  shell: "{{ ansible_env.HOME}}/.virtualenvs/{{django_project.app_name}}venv/bin/python manage.py collectstatic --clear --noinput"
+  args:
+      executable: /bin/bash
+      chdir: "{{ ansible_env.HOME }}/{{django_project.app_name}}/src"
+  register: collectstatic_js_reverse_result
+  tags:
+    - 'deploy'
+  notify:
+    - "restart supervisord"
+    - "restart nginx"

@@ -1,0 +1,65 @@
+---
+
+
+- hosts: localhost
+  gather_facts: no
+  vars:
+    include_vars: parametros.yml
+  tasks:
+    - name:
+      set_fact:
+          aplicacao_ip="{{aplicacao_ip}}"
+          bancodados_ip="{{bancodados_ip}}"
+      changed_when: False
+    - name:
+      add_host:
+          name: "{{ bancodados_ip }}"
+          ansible_user: "{{bancodados_linux_normal_user}}"
+          ansible_password: "{{bancodados_linux_normal_user_password}}"
+          ansible_become_user: "{{bancodados_linux_root_user}}"
+          ansible_become_pass: "{{bancodados_linux_root_password}}"
+          ansible_become_method: "su"
+          ansible_port: "{{bancodados_linux_ssh_port}}"
+          instance_name: "banco_de_dados_solar"
+          groups: dynamically_created_host_database
+      changed_when: False
+
+- hosts:
+    - dynamically_created_host_database
+  vars:
+    include_vars: parametros.yml
+  roles:
+      - role: postgresql
+        become: yes
+        postgresql_version: "9.6"
+        postgresql_daemon: "postgresql@{{ postgresql_version }}-main"
+        postgresql_locales:
+          - 'pt_BR.UTF-8'
+
+        postgresql_users:
+          - name: solar #required; the rest are optional
+            password: solar # defaults to not set
+#            db: 'db_solar_ansible' # defaults to not set
+            login_password: '{{ postgresql_user }}' # defaults to not set
+            login_user: '{{ postgresql_user }}' # defaults to '{{ postgresql_user }}'
+
+#        postgresql_hba_entries:
+#          - { type: local, database: all, user: postgres, auth_method: md5 }
+#          - { type: local, database: all, user: all, auth_method: md5 }
+##          - { type: host, database: all, user: all, auth_method: md5 }
+#          - { type: host, database: all, user: all, address: '127.0.0.1/32', auth_method: md5 }
+##          - { type: host, database: all, user: all, address: '127.0.0.1/32', auth_method: md5 }
+#          - { type: host, database: all, user: all, address: '::1/128', auth_method: md5 }
+#          - { type: host, database: all, user: all, address: '{{bancodados_ip}}/32', auth_method: md5 }
+#          - { type: host, database: all, user: all, address: '192.168.5.30/24', auth_method: md5 }
+#        postgresql_databases:
+          - name: {{db_solar}} # required; the rest are optional
+            lc_collate: 'pt_BR.UTF-8'# defaults to 'en_US.UTF-8'
+            lc_ctype: 'pt_BR.UTF-8'# defaults to 'en_US.UTF-8'
+#            login_host: 'localhost' # defaults to 'localhost'
+            login_password: '{{ postgresql_user }}' # defaults to not set
+            login_user: '{{ postgresql_user }}' # defaults to '{{ postgresql_user }}'
+#            login_unix_socket: # defaults to 1st of postgresql_unix_socket_directories
+##            port: # defaults to not set
+#
+

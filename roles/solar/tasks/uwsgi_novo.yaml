@@ -1,0 +1,76 @@
+---
+- name: install build utilities
+  apt: pkg=build-essential state=present
+  become: yes
+
+- name: install python-dev package
+  apt: pkg=python-dev state=present
+  become: yes
+
+- name: install uwsgi package
+  apt: pkg="{{item}}" state=present
+  become: yes
+  with_items:
+    - uwsgi
+#    - uwsgi-emperor
+    - uwsgi-plugin-python
+#    - uwsgi-plugin-python3
+
+#
+#
+#
+#
+#- name: 'CLONE | Clone/update uwsgi source code'
+#  git:
+#    repo: "https://github.com/unbit/uwsgi.git"
+#    dest: "/tmp/uwsgisrc"
+#    version: "2.0.15"
+#    update: yes
+#    force: yes
+#
+#
+#- name: "Build uwsgi"
+#  shell: "{{ ansible_env.HOME}}/.virtualenvs/{{django_project.app_name}}venv/bin/python uwsgiconfig.py --plugin"
+#  args:
+#      executable: /bin/bash
+#      chdir: "/tmp/uwsgisrc"
+#  tags:
+#    - 'deploy'
+
+#- name: install uwsgi server
+##  pip: name=uwsgi virtualenv={{ uwsgi_venv }} version=2.0.15
+#  pip:
+#     name: uwsgi
+#     executable: "{{ pyenv_global_python_directory }}/bin/pip"
+#     version: 2.0.15
+#     extra_args: "--no-binary :all: -v"
+#  register: uwsgi_install_result
+
+
+#- name: debug uwsgi instalation
+#  debug: msg="{{uwsgi_install_result.stdout}}"
+
+- name: configurar diretorio uwsgi
+  file: path={{ uwsgi_config_path }} state=directory
+
+#- name: configure all apps on uwsgi server
+##  template: src=uwsgi/app_uwsgi.ini dest={{ uwsgi_config_path }}/{{ django_project.app_name }}.ini
+#  template: src=uwsgi/app_uwsgi.ini dest=/etc/uwsgi-emperor/vassals/{{ django_project.app_name }}.ini
+#  become: yes
+#  notify:
+#   - "restart supervisord"
+#   - "restart uwsgi app"
+
+
+- name: configure uwsgi apps on uwsgi server
+  template: src=uwsgi/app_uwsgi.ini dest=/etc/uwsgi/apps-available/{{ django_project.app_name }}.ini
+  become: yes
+
+- name: link to enable uwsgi configuration
+  file: state=link
+        src=/etc/uwsgi/apps-available/{{ django_project.app_name }}.ini
+        path=/etc/uwsgi/apps-enabled/{{ django_project.app_name }}.ini
+  become: yes
+  notify:
+   - "restart supervisord"
+   - "restart uwsgi app"

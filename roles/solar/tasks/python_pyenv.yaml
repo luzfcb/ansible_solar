@@ -1,0 +1,51 @@
+---
+#- name: install python dev
+#  become: yes
+#  apt: pkg={{ item }} state=present
+#  with_items:
+#    - python-dev
+#    - python-setuptools
+#
+#- name: install pip
+#  become: yes
+#  easy_install: name=pip
+#
+#- name: install virtualenv
+#  become: yes
+#  pip: name={{ item }} state=present extra_args='--upgrade'
+#  with_items:
+#    - pip
+#    - virtualenv
+
+- name: Install python versions on pyenv
+  tags:
+    - versions
+  command: "{{ pyenv_root }}/bin/pyenv install -s {{ item }}"
+  environment:
+    - PYTHON_BUILD_ARIA2_OPTS: "-x 10 -k 1M"
+  args:
+    creates: "{{ pyenv_root }}/versions/{{ item }}"
+  with_items:
+    - "{{ pyenv_versions }}"
+    - "{{ pyenv_global_version }}"
+#    - "{{ pyenv_project_versions|json_query('[*].version') }}"
+
+- name: Set global python version (pyenv)
+  tags:
+    - global
+  lineinfile:
+    path: "{{ pyenv_root }}/version"
+    regexp: "^{{ pyenv_global_version }}"
+    line: "{{ pyenv_global_version }}"
+    create: yes
+  when: pyenv_global_version is defined
+
+
+- name: install {{django_project.app_name}} python dependencies
+  pip:
+    name: "{{item}}"
+    executable: "{{ pyenv_global_python_directory }}/bin/pip"
+    extra_args: "-v"
+  with_items:
+    - "virtualenv"
+    - "virtualenvwrapper"

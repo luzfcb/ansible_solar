@@ -1,0 +1,28 @@
+---
+# vars file for ansible-nginx-uwsgi-supervisor
+
+# User
+web_user: "{{ ansible_env.SUDO_USER }}"
+
+# NGINX
+nginx_app_config: "{{ app_name }}_uwsgi_nginx.conf"
+
+# Supervisor
+supervisor_app_config: "{{ app_name }}_supervisor.conf"
+
+# UWSGI
+uwsgi_venv: "{{ virtualenv_root_path }}/uwsgi"
+uwsgi_config_path: "{{ web_root_path }}/config/uwsgi"
+uwsgi_app_ini: "{{ app_name }}_uwsgi.ini"
+uwsgi_app_service_name: "{{ app_name }}_uwsgi"
+
+
+default_django_project: {
+        git_url: '',
+        src_dir_name: 'src',
+        app_name: 'solar',
+        app_domains: ['solar.defensoria.to.gov.br', 'www.solar.defensoria.to.gov.br'],
+        uwsgi: 'config.uwsgi',
+        media_dir: 'media',
+        static_dir: 'staticfiles_producao',
+}
